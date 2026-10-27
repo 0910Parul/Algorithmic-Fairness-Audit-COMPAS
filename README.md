@@ -1,48 +1,93 @@
-# Fairness in Recidivism Prediction: ProPublica vs. Northpointe on COMPAS
+# Auditing Algorithmic Fairness in Recidivism Risk Prediction
 
-This project audits **COMPAS**, a widely used criminal-justice risk-scoring algorithm, for racial bias. Using **5,278 defendants** (3,175 Black, 2,103 white), I tested both sides of a famous debate: ProPublica's claim that COMPAS's **errors** fall unequally on Black defendants, and Northpointe's rebuttal that the score is **calibrated** across races. Both turn out to be true — Black defendants who were not rearrested were **1.9x as likely to be wrongly labeled high-risk** (42.3% vs. 22.0%), even though scores predict rearrest similarly for both groups. Built for **MSBA 6341 — Responsible AI** (Carlson, University of Minnesota).
+## Project Overview
 
-## 🔍 Project Goals
+This project audits racial disparities in COMPAS risk classifications using a **5,278-defendant** sample. It examines the distinction between unequal error rates, predictive parity, and calibration, then uses logistic regression to compare associations with risk labels and observed outcomes.
 
-- Test empirically whether ProPublica's allegation (unequal error rates) and Northpointe's rebuttal (predictive parity) are supported by the data.
-- Determine whether the racial gap in COMPAS labels is explained by legitimate risk factors (priors, age, sex, charge severity).
-- Recommend how fairness should be defined and operationalized for high-stakes decisions like bail, sentencing, and parole.
+The analytical question is how the choice of fairness metric changes the assessment of a decision-support system. The sample includes **3,175 Black defendants** and **2,103 white defendants**. The outcome is **rearrest within two years**, rather than proven reoffending; a **Medium or High** COMPAS label is treated as a positive risk prediction.
 
-## 📄 Files Included
+## Key Highlights
 
-- **`COMPAS_Fairness_Analysis.ipynb`** — reproducible analysis: base rates, error-rate audit, calibration by decile, logistic regressions, and robustness checks.
-- **`report/Fairness_in_Recidivism_Prediction_Report.pdf`** — written report with position, ethical reasoning, policy recommendation, and appendix tables.
-- **`docs/Case_Brief.pdf`** — the case prompt and data dictionary.
-- **`data/compas-scores.csv`** — cleaned subsample of ProPublica's public COMPAS dataset.
-- **`outputs/`** — error-rate and calibration charts.
-- **`requirements.txt`** — Python dependencies.
+- **Error disparity:** the saved analysis records false-positive rates of **42.3% for Black defendants** and **22.0% for white defendants**, a **1.92× ratio**.
+- **Multiple fairness views:** compares false-positive and false-negative rates, positive predictive value (PPV), accuracy, and observed rearrest rates by score decile.
+- **Adjusted analysis:** with the specified controls, the odds ratio for a Medium/High label was **1.62**, compared with **1.10** for observed rearrest.
+- **Decision support:** translates the findings into a case-study recommendation for explicit fairness objectives, recurring audits, and human review.
 
-## 🧪 Methods Used
+See the [analysis notebook](COMPAS_Fairness_Analysis.ipynb), [report](report/Fairness_in_Recidivism_Prediction_Report.pdf), and [results evidence](docs/RESULTS_EVIDENCE.md).
 
-- **Fairness metrics by group:** false-positive rate, false-negative rate, positive predictive value (PPV), and accuracy — treating a Medium/High label as a positive prediction.
-- **Calibration analysis:** observed two-year rearrest rate by COMPAS decile score and race.
-- **Logistic regression** (statsmodels) with parallel models — race → COMPAS label vs. race → actual rearrest — controlling for prior offenses, age, sex, and charge degree; odds ratios with 95% CIs.
-- **Robustness checks** across three model specifications (full controls, no priors, race only).
-- **Ethical frameworks:** the fairness impossibility result (Chouldechova, 2017; Kleinberg et al., 2017), Rawls's veil of ignorance, and Kant's respect for persons.
+## Technical Implementation
 
-## 📈 Key Findings
+1. **Define the audit:** derive a Medium/High indicator and identify the two racial groups represented in the supplied dataset.
+2. **Inspect base rates:** summarize group counts, observed rearrest rates, and the share receiving a Medium/High label.
+3. **Measure error rates:** calculate FPR, FNR, PPV, and accuracy within each group using the same classification rule.
+4. **Inspect calibration:** compare observed rearrest rates at each COMPAS decile and retain the group sample sizes.
+5. **Fit parallel regressions:** model the risk label and observed rearrest separately, controlling for prior offenses, age category, sex, and charge degree; report race-associated odds ratios and 95% confidence intervals.
+6. **Check robustness:** compare full controls, a specification without priors, and a race-only specification.
 
-- **ProPublica is right about errors:** among defendants *not* rearrested, **42.3%** of Black defendants were labeled Medium/High vs. **22.0%** of white defendants; among those who *were* rearrested, **49.6%** of white defendants were labeled Low vs. **28.5%** of Black defendants.
-- **Northpointe is right about calibration:** PPV is similar (**65.0% vs. 59.5%**), and at decile 7 rearrest rates are nearly identical (**60.9% vs. 60.2%**).
-- **The label gap isn't explained by the controls:** holding priors, age, sex, and charge constant, Black defendants had **1.62x the odds** of a Medium/High label (95% CI 1.42–1.86, p < .001) but only **1.10x the odds** of actual rearrest (not significant, p = .119). The label-vs-rearrest gap holds at **~1.5–1.6x** across all three specifications.
-- **Both criteria can't hold at once:** with different base rates (**52.3% vs. 39.1%**), calibration and equal error rates are mathematically incompatible — so fairness is a policy choice, not a tuning problem.
-- The outcome measures *rearrest*, which also reflects policing intensity — weakening the case that calibration alone proves fairness.
+## Methods & Technologies
 
-## 🛠 Technologies
+- **Python:** pandas, NumPy, Matplotlib, and statsmodels.
+- **Statistical analysis:** group-conditioned classification metrics, score-bin comparisons, logistic regression, confidence intervals, and specification checks.
+- **Communication:** comparison charts and a written discussion of competing fairness objectives and the limitations of the outcome measure.
+- **Environment:** Jupyter Notebook; dependencies in [requirements.txt](requirements.txt).
 
-- Python (pandas, NumPy, statsmodels, Matplotlib)
-- Jupyter Notebook
-- Algorithmic fairness metrics (FPR/FNR parity, predictive parity, calibration)
-- Logistic regression & robustness analysis
+## Results & Insights
 
-## ✅ Outcome
+The table summarizes saved notebook outputs. The group labels below correspond to `African-American` and `Caucasian` in the supplied CSV.
 
-A recommendation to prioritize **false-positive parity** wherever an error can cost someone their liberty: a COMPAS label should not independently justify detention or a harsher sentence unless an independent audit shows the false-positive-rate gap is below a **publicly defined threshold** — backed by recurring group-level audits, documented judicial use, and a defendant's right to examine and challenge the score.
+| Metric | Black defendants | White defendants |
+|---|---:|---:|
+| Sample size | 3,175 | 2,103 |
+| Observed two-year rearrest rate | 52.3% | 39.1% |
+| False-positive rate: Medium/High among those not rearrested | **42.3%** | **22.0%** |
+| False-negative rate: Low among those rearrested | 28.5% | 49.6% |
+| Positive predictive value: rearrest among Medium/High labels | 65.0% | 59.5% |
+| Classification accuracy | 64.9% | 67.2% |
+
+- **Different errors fall on different groups:** Black defendants who were not rearrested were more often labeled Medium/High; white defendants who were rearrested were more often labeled Low.
+- **Calibration requires qualification:** observed rates were close at decile 7 (**60.9% versus 60.2%**), but the full table contains gaps at other deciles and varying sample sizes. PPVs also differ by 5.5 percentage points. These descriptive comparisons do not establish exact calibration or predictive parity.
+- **Adjusted associations differ by outcome:** the full-control label model gives an odds ratio of **1.62 (95% CI 1.42–1.86)**; the rearrest model gives **1.10 (95% CI 0.98–1.25; p=0.119)**. The first association remains after the included controls; this does not establish its cause.
+- **Robustness has a defined scope:** ratios of the two race-associated odds ratios range from **1.47 to 1.61** across the three specifications. They describe the fitted models, rather than a causal effect or formal test that the coefficients differ.
+
+### Result scope
+
+This audit covers the supplied two-group sample and one observed outcome. Rearrest is an imperfect proxy influenced by factors beyond individual behavior. Observational controls and descriptive calibration plots cannot establish fairness for every group, context, or use. The documentation update preserves the original analysis and does not claim a new model deployment or policy intervention.
+
+## Repository Structure
+
+| Path | Purpose |
+|---|---|
+| [COMPAS_Fairness_Analysis.ipynb](COMPAS_Fairness_Analysis.ipynb) | Group metrics, calibration, regressions, and robustness analysis |
+| [data/compas-scores.csv](data/compas-scores.csv) | Supplied 5,278-defendant sample |
+| [docs/Case_Brief.pdf](docs/Case_Brief.pdf) | Case context and data dictionary |
+| [report/Fairness_in_Recidivism_Prediction_Report.pdf](report/Fairness_in_Recidivism_Prediction_Report.pdf) | Written interpretation and case-study policy recommendation |
+| [outputs/error_rates_by_race.png](outputs/error_rates_by_race.png) | Error-rate comparison chart |
+| [outputs/calibration_by_decile.png](outputs/calibration_by_decile.png) | Rearrest-rate comparison by score decile |
+| [requirements.txt](requirements.txt) | Python dependencies |
+| [docs/RESULTS_EVIDENCE.md](docs/RESULTS_EVIDENCE.md) | Sources, metric definitions, and interpretation boundaries |
+
+## Getting Started
+
+From the repository root:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+jupyter notebook COMPAS_Fairness_Analysis.ipynb
+```
+
+Run the notebook in order with the repository root as the working directory. The data is included; no API credentials are needed. Chart cells write to the existing `outputs/` directory. Dependencies are unpinned, so package behavior may differ from the saved environment.
+
+## Applications & Takeaways
+
+The project demonstrates how an analyst can audit an existing scoring system rather than assess it through aggregate accuracy alone. Useful practices include defining the positive prediction, showing group-level denominators, comparing harmful errors, and stating what the outcome actually measures.
+
+The report proposes prioritizing false-positive parity in liberty-affecting decisions, supported by independent review, recurring audits, documented use, and a way to challenge scores. This is a case-study recommendation; no implementation or downstream impact was evaluated. The broader governance lesson is to make the decision objective and acceptable trade-offs explicit before adopting a score.
+
+## Project Context
+
+Developed for **MSBA 6341 — Responsible AI**, Carlson School of Management, University of Minnesota. The analysis examines the ProPublica–Northpointe debate using the supplied COMPAS dataset. Original data, code, charts, and report are retained.
 
 ---
 
